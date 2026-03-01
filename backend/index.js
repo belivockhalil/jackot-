@@ -20,6 +20,13 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ── Routes ───────────────────────────────────────────
+const modulesRoute = require('./routes/modules.route');
+app.use('/api/v1/modules', modulesRoute);
+
+const settingsRoute = require('./routes/settings.route');
+app.use('/api/v1/settings', settingsRoute);
+
 // ── Health Check ──────────────────────────────────────
 app.get('/', (req, res) => {
   res.json({
