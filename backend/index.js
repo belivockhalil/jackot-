@@ -27,6 +27,9 @@ app.use('/api/v1/modules', modulesRoute);
 const settingsRoute = require('./routes/settings.route');
 app.use('/api/v1/settings', settingsRoute);
 
+const authRoute = require('./routes/auth.route');
+app.use('/api/v1/auth', authRoute);
+
 // ── Health Check ──────────────────────────────────────
 app.get('/', (req, res) => {
   res.json({
