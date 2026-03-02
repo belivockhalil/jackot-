@@ -33,6 +33,12 @@ app.use('/api/v1/auth', authRoute);
 const clientsRoute = require('./routes/clients.route');
 app.use('/api/v1/clients', clientsRoute);
 
+const suppliersRoute = require('./routes/suppliers.route');
+app.use('/api/v1/suppliers', suppliersRoute);
+
+const projectsRoute = require('./routes/projects.route');
+app.use('/api/v1/projects', projectsRoute);
+
 // ── Health Check ──────────────────────────────────────
 app.get('/', (req, res) => {
   res.json({
