@@ -39,6 +39,18 @@ app.use('/api/v1/suppliers', suppliersRoute);
 const projectsRoute = require('./routes/projects.route');
 app.use('/api/v1/projects', projectsRoute);
 
+const incomeRoute = require('./routes/income.route');
+app.use('/api/v1/income', incomeRoute);
+
+const expensesRoute = require('./routes/expenses.route');
+app.use('/api/v1/expenses', expensesRoute);
+
+const bankingRoute = require('./routes/banking.route');
+app.use('/api/v1/banking', bankingRoute);
+
+const reportsRoute = require('./routes/reports.route');
+app.use('/api/v1/reports', reportsRoute);
+
 // ── Health Check ──────────────────────────────────────
 app.get('/', (req, res) => {
   res.json({
