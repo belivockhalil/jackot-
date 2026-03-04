@@ -1,36 +1,12 @@
 // ─────────────────────────────────────────────────────
 // JACKOT — Modules Route
-// Handles all module on/off switching per business
 // ─────────────────────────────────────────────────────
 
 const express  = require('express');
 const router   = express.Router();
 const supabase = require('../config/supabase');
 
-// ── GET all available modules ─────────────────────────
-// Returns the full master list from the database
-router.get('/', async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('modules')
-      .select('*')
-      .eq('is_active', true)
-      .order('sort_order');
-
-    if (error) throw error;
-
-    res.json({
-      success: true,
-      total:   data.length,
-      modules: data,
-    });
-
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// ── GET modules grouped by category ──────────────────
+// ── GET all modules grouped by category ──────────────
 router.get('/grouped', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -41,18 +17,31 @@ router.get('/grouped', async (req, res) => {
 
     if (error) throw error;
 
-    // Group by category — soft coded, no category names in code
     const grouped = data.reduce((acc, module) => {
       if (!acc[module.category]) acc[module.category] = [];
       acc[module.category].push(module);
       return acc;
     }, {});
 
-    res.json({
-      success:  true,
-      total:    data.length,
-      grouped:  grouped,
-    });
+    res.json({ success: true, total: data.length, grouped });
+
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ── GET all modules flat list ─────────────────────────
+router.get('/', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('modules')
+      .select('*')
+      .eq('is_active', true)
+      .order('sort_order');
+
+    if (error) throw error;
+
+    res.json({ success: true, total: data.length, modules: data });
 
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -71,11 +60,7 @@ router.get('/user/:userId', async (req, res) => {
 
     if (error) throw error;
 
-    res.json({
-      success: true,
-      userId:  userId,
-      modules: data,
-    });
+    res.json({ success: true, userId, modules: data });
 
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -87,23 +72,40 @@ router.patch('/toggle', async (req, res) => {
   try {
     const { userId, moduleKey, isEnabled } = req.body;
 
-    const { data, error } = await supabase
+    // Check if row already exists
+    const { data: existing } = await supabase
       .from('user_modules')
-      .upsert({
-        user_id:    userId,
-        module_key: moduleKey,
-        is_enabled: isEnabled,
-        updated_at: new Date().toISOString(),
-      })
-      .select()
+      .select('id')
+      .eq('user_id', userId)
+      .eq('module_key', moduleKey)
       .single();
+
+    let data, error;
+
+    if (existing) {
+      // Update existing row
+      ({ data, error } = await supabase
+        .from('user_modules')
+        .update({ is_enabled: isEnabled, updated_at: new Date().toISOString() })
+        .eq('user_id', userId)
+        .eq('module_key', moduleKey)
+        .select()
+        .single());
+    } else {
+      // Insert new row
+      ({ data, error } = await supabase
+        .from('user_modules')
+        .insert({ user_id: userId, module_key: moduleKey, is_enabled: isEnabled })
+        .select()
+        .single());
+    }
 
     if (error) throw error;
 
     res.json({
-      success:    true,
-      message:    `Module ${moduleKey} is now ${isEnabled ? 'ON' : 'OFF'}`,
-      module:     data,
+      success: true,
+      message: `Module ${moduleKey} is now ${isEnabled ? 'ON' : 'OFF'}`,
+      module:  data,
     });
 
   } catch (err) {

@@ -78,14 +78,45 @@ router.patch('/:userId', async (req, res) => {
     const { userId } = req.params;
     const updates    = req.body;
 
-    updates.updated_at = new Date().toISOString();
+    // Remove fields that don't exist in the settings table
+    const allowed = [
+      'business_name', 'greeting_name', 'business_phone', 'business_email',
+      'business_address', 'currency', 'currency_symbol', 'language',
+      'date_format', 'timezone', 'tax_rate', 'tax_label',
+      'invoice_prefix', 'invoice_notes', 'invoice_color',
+      'theme_primary', 'theme_accent', 'theme_background',
+    ];
 
-    const { data, error } = await supabase
+    const clean = {};
+    allowed.forEach(key => {
+      if (updates[key] !== undefined) clean[key] = updates[key];
+    });
+
+    clean.updated_at = new Date().toISOString();
+
+    // Check if settings row exists first
+    const { data: existing } = await supabase
       .from('settings')
-      .update(updates)
+      .select('id')
       .eq('user_id', userId)
-      .select()
       .single();
+
+    let data, error;
+
+    if (existing) {
+      ({ data, error } = await supabase
+        .from('settings')
+        .update(clean)
+        .eq('user_id', userId)
+        .select()
+        .single());
+    } else {
+      ({ data, error } = await supabase
+        .from('settings')
+        .insert({ user_id: userId, ...clean })
+        .select()
+        .single());
+    }
 
     if (error) throw error;
 

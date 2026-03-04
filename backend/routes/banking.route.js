@@ -1,47 +1,97 @@
 // ─────────────────────────────────────────────────────
 // JACKOT — Banking Route
-// Cash, Mpesa, Bank ledgers — smart creditor payments
+// Fully flexible — any bank, mobile money, or platform
 // ─────────────────────────────────────────────────────
 
 const express  = require('express');
 const router   = express.Router();
 const supabase = require('../config/supabase');
 
-// ── GET ledger entries by type ────────────────────────
-// type = cash | mpesa | kcb | ncba
-router.get('/:ledgerType', async (req, res) => {
+// ── GET all accounts for a user ───────────────────────
+router.get('/accounts', async (req, res) => {
   try {
     const { userId } = req.query;
-    const { ledgerType } = req.params;
 
     const { data, error } = await supabase
-      .from('bank_ledger')
+      .from('bank_accounts')
       .select('*')
       .eq('user_id', userId)
-      .eq('ledger_type', ledgerType)
-      .order('date', { ascending: false });
+      .eq('is_active', true)
+      .order('sort_order');
 
     if (error) throw error;
 
-    const totalIn  = data.reduce((sum, e) => sum + Number(e.amount_in), 0);
-    const totalOut = data.reduce((sum, e) => sum + Number(e.amount_out), 0);
-    const balance  = totalIn - totalOut;
-
-    res.json({
-      success:    true,
-      ledgerType,
-      totalIn,
-      totalOut,
-      balance,
-      entries:    data,
-    });
+    res.json({ success: true, accounts: data });
 
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// ── GET all ledgers summary ───────────────────────────
+// ── POST create a new account ─────────────────────────
+router.post('/accounts', async (req, res) => {
+  try {
+    const { userId, name, type, color, icon } = req.body;
+
+    const { data, error } = await supabase
+      .from('bank_accounts')
+      .insert({ user_id: userId, name, type, color, icon })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({ success: true, message: `${name} account added`, account: data });
+
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ── DELETE an account ─────────────────────────────────
+router.delete('/accounts/:id', async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('bank_accounts')
+      .update({ is_active: false })
+      .eq('id', req.params.id);
+
+    if (error) throw error;
+
+    res.json({ success: true, message: 'Account removed' });
+
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ── GET ledger entries for one account ────────────────
+router.get('/ledger/:accountId', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    const { accountId } = req.params;
+
+    const { data, error } = await supabase
+      .from('bank_ledger')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('ledger_type', accountId)
+      .order('date', { ascending: false });
+
+    if (error) throw error;
+
+    const totalIn  = data.reduce((s, e) => s + Number(e.amount_in  || 0), 0);
+    const totalOut = data.reduce((s, e) => s + Number(e.amount_out || 0), 0);
+    const balance  = totalIn - totalOut;
+
+    res.json({ success: true, totalIn, totalOut, balance, entries: data });
+
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ── GET summary of all accounts ───────────────────────
 router.get('/', async (req, res) => {
   try {
     const { userId } = req.query;
@@ -53,24 +103,20 @@ router.get('/', async (req, res) => {
 
     if (error) throw error;
 
-    // Group by ledger type — soft coded
     const summary = data.reduce((acc, entry) => {
       if (!acc[entry.ledger_type]) {
         acc[entry.ledger_type] = { totalIn: 0, totalOut: 0, balance: 0 };
       }
-      acc[entry.ledger_type].totalIn  += Number(entry.amount_in);
-      acc[entry.ledger_type].totalOut += Number(entry.amount_out);
-      acc[entry.ledger_type].balance   = acc[entry.ledger_type].totalIn - acc[entry.ledger_type].totalOut;
+      acc[entry.ledger_type].totalIn  += Number(entry.amount_in  || 0);
+      acc[entry.ledger_type].totalOut += Number(entry.amount_out || 0);
+      acc[entry.ledger_type].balance   =
+        acc[entry.ledger_type].totalIn - acc[entry.ledger_type].totalOut;
       return acc;
     }, {});
 
-    const grandTotal = Object.values(summary).reduce((sum, l) => sum + l.balance, 0);
+    const grandTotal = Object.values(summary).reduce((s, l) => s + l.balance, 0);
 
-    res.json({
-      success:    true,
-      summary,
-      grandTotal,
-    });
+    res.json({ success: true, summary, grandTotal });
 
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -82,7 +128,7 @@ router.post('/', async (req, res) => {
   try {
     const {
       userId,
-      ledgerType,
+      accountId,
       date,
       description,
       amountIn,
@@ -92,12 +138,12 @@ router.post('/', async (req, res) => {
       referenceCode,
     } = req.body;
 
-    // Get current balance for this ledger
+    // Get last balance for this account
     const { data: existing } = await supabase
       .from('bank_ledger')
       .select('balance')
       .eq('user_id', userId)
-      .eq('ledger_type', ledgerType)
+      .eq('ledger_type', accountId)
       .order('created_at', { ascending: false })
       .limit(1);
 
@@ -108,7 +154,7 @@ router.post('/', async (req, res) => {
       .from('bank_ledger')
       .insert({
         user_id:        userId,
-        ledger_type:    ledgerType,
+        ledger_type:    accountId,
         date:           date || new Date().toISOString().split('T')[0],
         description,
         amount_in:      amountIn  || 0,
@@ -123,7 +169,7 @@ router.post('/', async (req, res) => {
 
     if (error) throw error;
 
-    // Smart creditor payment — if paying a supplier, reduce their balance
+    // Smart — if paying a supplier reduce their balance
     if (linkedType === 'supplier' && linkedId && amountOut) {
       const { data: supplier } = await supabase
         .from('suppliers')
@@ -140,7 +186,7 @@ router.post('/', async (req, res) => {
         .eq('id', linkedId);
     }
 
-    // If receiving payment from client, update their total_paid
+    // Smart — if receiving from client update their total_paid
     if (linkedType === 'client' && linkedId && amountIn) {
       const { data: client } = await supabase
         .from('clients')
@@ -154,12 +200,7 @@ router.post('/', async (req, res) => {
         .eq('id', linkedId);
     }
 
-    res.json({
-      success:    true,
-      message:    'Transaction recorded successfully',
-      newBalance,
-      entry:      data,
-    });
+    res.json({ success: true, message: 'Transaction recorded', newBalance, entry: data });
 
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
