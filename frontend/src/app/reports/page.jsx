@@ -75,7 +75,7 @@ export default function ReportsPage() {
   toast('Building Excel file...', { icon: '⏳' });
   try {
     const params = new URLSearchParams({ userId: user.userId });
-const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/excel/export?${params}`);    if (!response.ok) {
+const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/excel/export?${params}`);    if (!response.ok) {
       const err = await response.json();
       throw new Error(err.error || 'Export failed');
     }
@@ -98,7 +98,7 @@ const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/excel/expor
   const runExport = async () => {
     setShowExportModal(false);
     if (exportFormat==='excel') await exportToExcel();
-    else await downloadReport();
+    else await exportToExcel();
   };
 
   const pieData = [

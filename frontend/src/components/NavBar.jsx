@@ -18,13 +18,19 @@ export default function NavBar() {
     { label: 'Banking',   href: '/banking',   icon: '🏦', key: 'cash_ledger' },
     { label: 'Reports',   href: '/reports',   icon: '📈', key: 'graph_income_expense' },
     { label: 'Invoices',  href: '/invoices',  icon: '🧾', key: 'invoice_generator' },
-    { label: 'Settings',  href: '/settings',  icon: '⚙️', key: null },
     { href:'/loans',    label:'🏛️ Loans',         key:'loan_manager'     },
 { href:'/savings',  label:'💵 Savings',        key:'savings_tracker'  },
 { href:'/assets',   label:'🏗️ Assets',         key:'assets_register'  },
 { href:'/notebook', label:'📓 Notebook',       key:'notebook'         },
 { href:'/goals',    label:'🎯 Goals',           key:'business_goals'   },
-  ].filter(link => link.key === null || isEnabled(link.key));
+{ href:'/quotes',   label:'📋 Job Quotes',     key:'job_quotes'       },
+{ href:'/budget',   label:'💰 Budget Planner',  key:'budget_planner'   },
+{ href:'/tax',      label:'🧾 Tax Manager',     key:'tax_manager'      },
+{ href:'/staff',    label:'👥 Staff Tracker',   key:'staff_tracker'    },
+{ href:'/stock',    label:'📦 Stock Tracker',   key:'stock_tracker'    },
+{ href:'/receipts', label:'🧾 Receipts',        key:'receipt_generator'},
+    { label: 'Settings',  href: '/settings',  icon: '⚙️', key: null },
+].filter(link => link.key === null || isEnabled(link.key));
 
   return (
     <>
