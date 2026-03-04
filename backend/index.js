@@ -66,6 +66,19 @@ app.use('/api/v1/assets',   assetsRoutes);
 app.use('/api/v1/notebook', notebookRoutes);
 app.use('/api/v1/goals',    goalsRoutes);
 
+const quotesRoutes   = require('./routes/quotes.route');
+const budgetRoutes   = require('./routes/budget.route');
+const taxRoutes      = require('./routes/tax.route');
+const staffRoutes    = require('./routes/staff.route');
+const stockRoutes    = require('./routes/stock.route');
+const receiptsRoutes = require('./routes/receipts.route');
+
+app.use('/api/v1/quotes',   quotesRoutes);
+app.use('/api/v1/budget',   budgetRoutes);
+app.use('/api/v1/tax',      taxRoutes);
+app.use('/api/v1/staff',    staffRoutes);
+app.use('/api/v1/stock',    stockRoutes);
+app.use('/api/v1/receipts', receiptsRoutes);
 // ── Health Check ──────────────────────────────────────
 app.get('/', (req, res) => {
   res.json({
