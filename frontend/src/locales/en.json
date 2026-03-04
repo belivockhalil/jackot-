@@ -1,0 +1,61 @@
+{
+  "app": {
+    "name": "Jackot",
+    "tagline": "Your business, your way"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "clients": "Clients",
+    "suppliers": "Suppliers",
+    "income": "Income",
+    "expenses": "Expenses",
+    "banking": "Banking",
+    "reports": "Reports",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "dashboard": {
+    "greeting_morning": "Good morning",
+    "greeting_afternoon": "Good afternoon",
+    "greeting_evening": "Good evening",
+    "they_owe_me": "They Owe Me",
+    "i_owe": "I Owe",
+    "savings": "Savings",
+    "gross_profit": "Gross Profit",
+    "net_profit": "Net Profit",
+    "health_score": "Financial Health",
+    "active_projects": "Active Projects",
+    "quick_entry": "Record Transaction"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add New",
+    "export": "Export PDF",
+    "send": "Send",
+    "view": "View",
+    "back": "Back"
+  },
+  "auth": {
+    "login": "Login",
+    "signup": "Sign Up",
+    "logout": "Logout",
+    "email": "Email Address",
+    "password": "Password",
+    "business_name": "Business Name",
+    "greeting_name": "Your Name",
+    "welcome": "Welcome back",
+    "no_account": "Don't have an account?",
+    "have_account": "Already have an account?"
+  },
+  "errors": {
+    "required": "This field is required",
+    "invalid_email": "Please enter a valid email",
+    "short_password": "Password must be at least 6 characters",
+    "server_error": "Something went wrong. Please try again.",
+    "not_found": "Not found"
+  }
+}
